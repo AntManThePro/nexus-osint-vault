@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NEXUS VAULT">
+<title>NEXUS · OSINT VAULT</title>
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230a0a0f'/><path d='M18 44 L32 14 L46 44 M24 32 H40' fill='none' stroke='%2300ff87' stroke-width='2.6' stroke-linecap='round'/><circle cx='32' cy='32' r='3' fill='%23ff0080'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--g:#00ff87;--c:#60efff;--p:#ff0080;--y:#ffcc00;--bg:#0a0a0f;--ink:#e8fff4;--dim:#8aa89a;--line:rgba(0,255,135,.28)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Mono",ui-monospace,monospace}
+#field{position:fixed;inset:0;z-index:0;width:100%;height:100%}
+#gate,#app{position:relative;z-index:1}button,input,textarea,select{font-family:inherit;color:var(--ink)}button{cursor:pointer}
+.hidden{display:none!important}
+#gate{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:18px 12px}
+.card{width:min(540px,100%);background:rgba(10,10,15,.9);border:1px solid var(--line);border-radius:18px;padding:20px 16px;backdrop-filter:blur(8px)}
+h1{font-family:Syne,sans-serif;letter-spacing:.16em;color:var(--g);margin:0;font-size:28px;text-shadow:0 0 16px rgba(0,255,135,.4)}
+.sub{color:var(--c);font-size:12px;margin:4px 0}.op{color:var(--y);font-size:11px;margin:0 0 10px}
+.manual{font-size:13px;line-height:1.5;background:#07070c;border:1px dashed rgba(96,239,255,.3);border-radius:12px;padding:12px}
+.manual b{color:var(--y)}
+label{font-size:10px;letter-spacing:.14em;color:var(--dim)}
+input,textarea,select{width:100%;background:#07070c;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:6px}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid var(--g);color:var(--g);border-radius:10px;padding:10px 12px;letter-spacing:.08em;font-size:12px;text-transform:uppercase}
+.btn.pink{border-color:var(--p);color:var(--p)}.btn.cyan{border-color:var(--c);color:var(--c)}.btn.yellow{border-color:var(--y);color:var(--y)}.btn.small{padding:7px 10px;font-size:10px}
+.err{color:var(--p);min-height:18px;font-size:12px;margin-top:8px}
+#app{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
+header.stamp{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:rgba(10,10,15,.82)}
+.chip{color:var(--y);font-size:10px;letter-spacing:.14em}header p{margin:0;color:var(--c);font-size:11px}
+#mods{display:flex;gap:6px;overflow:auto;padding:12px 0 8px}
+#mods button{flex:0 0 auto;background:#0d0d14;border:1px solid rgba(96,239,255,.25);color:var(--dim);border-radius:999px;padding:8px 12px;font-size:11px}
+#mods button.on{background:var(--g);color:#04140c;border-color:var(--g);font-weight:600}
+.panel{display:none;background:rgba(16,16,24,.9);border:1px solid var(--line);border-radius:16px;padding:12px}
+.panel.on{display:block}
+.panel h2{font-family:Syne,sans-serif;font-size:15px;margin:0 0 4px;color:var(--g);letter-spacing:.06em}
+.lede{color:var(--dim);font-size:12px;margin:0 0 10px;line-height:1.4}
+.repo,.tool,.ioc{border:1px solid rgba(0,255,135,.2);border-radius:12px;padding:10px;margin-bottom:8px;background:#07070c}
+.repo h3,.tool h3{margin:0;color:var(--y);font-size:14px}
+.desc{color:var(--dim);font-size:12px;margin:4px 0}
+.cmd{color:var(--g);font-size:12px;word-break:break-all}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--c);margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.lattice{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.plat{display:block;padding:8px;border:1px solid rgba(0,255,135,.22);border-radius:10px;color:var(--ink);text-decoration:none;font-size:12px;background:#07070c}
+.plat small{display:block;color:var(--dim);font-size:10px}
+#caseWrap{height:min(62dvh,560px);border:1px solid rgba(96,239,255,.3);border-radius:12px;overflow:hidden;background:#07070c}
+#caseCanvas{width:100%;height:100%;touch-action:none;display:block}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{border-bottom:1px solid rgba(96,239,255,.15);text-align:left;padding:6px 4px}
+th{color:var(--y);font-size:10px;letter-spacing:.1em}
+@media(max-width:640px){h1{font-size:22px}}
+</style>
+</head>
+<body>
+<canvas id="field"></canvas>
+<section id="gate">
+  <div class="card">
+    <div class="chip">DoubleA · AntManThePro</div>
+    <h1>NEXUS</h1>
+    <p class="sub">NExtended Xperimental USers</p>
+    <p class="op">OSINT VAULT · locked gate</p>
+    <div class="manual">
+      This page is a locked shelf.<br>
+      1. Key is <b>admin</b>. That only opens this tab. It does not install tools.<br>
+      2. <b>SHELF</b> is the clone list. Copy a green line, paste it in Terminal.<br>
+      3. <b>LINKS</b> opens public sites. <b>BENCH</b> works on text you paste. <b>CASE</b> is a drag board.<br>
+      Refresh GitHub updates star counts and last-push dates. Nothing here scrapes a person.
+    </div>
+    <form id="gateForm">
+      <label for="key">OPERATOR KEY</label>
+      <input id="key" type="password" placeholder="admin" autocomplete="current-password">
+      <div class="row">
+        <button class="btn" type="submit">Open vault</button>
+        <button class="btn pink" id="peek" type="button">Show</button>
+      </div>
+    </form>
+    <div class="err" id="err"></div>
+  </div>
+</section>
+<main id="app" class="hidden">
+  <header class="stamp" data-brand="NExtended Xperimental USers">
+    <div>
+      <div class="chip">DoubleA · AntManThePro</div>
+      <h1>NEXUS</h1>
+      <p>NExtended Xperimental USers · OSINT VAULT</p>
+    </div>
+    <button class="btn small pink" id="lock" type="button">Lock</button>
+  </header>
+  <nav id="mods">
+    <button data-mod="shelf" class="on">SHELF</button>
+    <button data-mod="links">LINKS</button>
+    <button data-mod="bench">BENCH</button>
+    <button data-mod="case">CASE</button>
+  </nav>
+
+  <section class="panel on" id="shelf">
+    <h2>REPO SHELF</h2>
+    <p class="lede">Top public OSINT repos. Copy clone, paste in Terminal. Check rows, then copy a script. Refresh pulls live GitHub dates.</p>
+    <div class="row">
+      <input id="q" type="search" placeholder="filter repo or job" style="flex:1;margin:0">
+      <button class="btn small" id="refresh" type="button">Refresh GitHub</button>
+      <button class="btn small cyan" id="copySel" type="button">Copy selected</button>
+      <button class="btn small yellow" id="saveSh" type="button">Download clone.sh</button>
+    </div>
+    <div id="cats" class="row"></div>
+    <div id="list"></div>
+    <p class="lede" id="stat"></p>
+  </section>
+
+  <section class="panel" id="links">
+    <h2>PUBLIC LINKS</h2>
+    <p class="lede">Sites that are not a git clone. Opens in a new tab. No scrape.</p>
+    <input id="lq" type="search" placeholder="filter tools">
+    <div class="grid" id="linkGrid"></div>
+  </section>
+
+  <section class="panel" id="bench">
+    <h2>ANALYST BENCH</h2>
+    <p class="lede">Paste what you already hold. Extract, defang, identify a hash, convert time, encode, or build a username link lattice.</p>
+    <div class="row" id="benchNav">
+      <button class="btn small" data-b="extract">Extract</button>
+      <button class="btn small" data-b="lattice">Lattice</button>
+      <button class="btn small" data-b="defang">Defang</button>
+      <button class="btn small" data-b="hash">Hash</button>
+      <button class="btn small" data-b="time">Time</button>
+      <button class="btn small" data-b="codec">Codec</button>
+    </div>
+    <div id="b-extract">
+      <textarea id="blob" placeholder="Paste a note, header, or dump"></textarea>
+      <div class="row"><button class="btn small" id="runExtract">Extract</button><button class="btn small cyan" id="copyIocs">Copy JSON</button><button class="btn small yellow" id="pushCase">Drop on case</button></div>
+      <div id="iocOut"></div>
+    </div>
+    <div id="b-lattice" class="hidden">
+      <input id="handle" type="text" placeholder="handle without @">
+      <div class="row"><button class="btn small" id="buildLattice">Build links</button><button class="btn small cyan" id="copyLinks">Copy list</button></div>
+      <div class="lattice" id="latticeOut"></div>
+    </div>
+    <div id="b-defang" class="hidden">
+      <textarea id="fangIn" placeholder="https://example.com"></textarea>
+      <div class="row"><button class="btn small" id="doDefang">Defang</button><button class="btn small cyan" id="doRefang">Refang</button><button class="btn small yellow" id="copyFang">Copy</button></div>
+      <textarea id="fangOut" readonly></textarea>
+    </div>
+    <div id="b-hash" class="hidden">
+      <input id="hashIn" type="text" placeholder="paste a hash">
+      <div class="row"><button class="btn small" id="idHash">Identify</button></div>
+      <div id="hashOut"></div>
+    </div>
+    <div id="b-time" class="hidden">
+      <input id="timeIn" type="text" placeholder="1710000000 or 2026-10-16T12:00:00Z">
+      <div class="row"><button class="btn small" id="parseTime">Parse</button><button class="btn small cyan" id="nowTime">Now</button></div>
+      <div id="timeOut"></div>
+    </div>
+    <div id="b-codec" class="hidden">
+      <textarea id="codecIn"></textarea>
+      <div class="row">
+        <button class="btn small" data-op="b64e">B64 enc</button><button class="btn small" data-op="b64d">B64 dec</button>
+        <button class="btn small cyan" data-op="hexe">Hex enc</button><button class="btn small cyan" data-op="hexd">Hex dec</button>
+        <button class="btn small yellow" data-op="urle">URL enc</button><button class="btn small yellow" data-op="urld">URL dec</button>
+        <button class="btn small pink" data-op="rot">ROT13</button>
+      </div>
+      <textarea id="codecOut" readonly></textarea>
+    </div>
+  </section>
+
+  <section class="panel" id="case">
+    <h2>CASE LATTICE</h2>
+    <p class="lede">Drop an entity. Drag it. Link mode joins two nodes. Export copies JSON. Stays in this browser.</p>
+    <div class="row">
+      <select id="etype" style="width:auto"><option>handle</option><option>email</option><option>domain</option><option>ip</option><option>url</option><option>hash</option><option>note</option></select>
+      <input id="elabel" type="text" placeholder="label" style="flex:1;margin:0">
+      <button class="btn small" id="addNode">Add</button>
+      <button class="btn small cyan" id="linkMode">Link mode</button>
+      <button class="btn small yellow" id="exportCase">Export JSON</button>
+      <button class="btn small pink" id="wipeCase">Wipe</button>
+    </div>
+    <div id="caseWrap"><canvas id="caseCanvas"></canvas></div>
+    <p class="lede" id="caseStat"></p>
+  </section>
+</main>
+<script>
+const TARGET = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+const REPOS = [
+  ["sherlock-project/sherlock","Username","Hunt a handle across public social sites.","pip install sherlock-project"],
+  ["soxoj/maigret","Username","Deeper username sweep and dossier.","pip install maigret"],
+  ["qeeqbox/social-analyzer","Username","Profile presence plus content notes.","pip install social-analyzer"],
+  ["WebBreacher/WhatsMyName","Username","Community username site list.",""],
+  ["soxoj/socid-extractor","Username","Structured fields from a profile URL.","pip install socid-extractor"],
+  ["megadose/holehe","Email","Is this email registered on public sites.","pip install holehe"],
+  ["laramies/theHarvester","Email","Emails, names, subdomains from public sources.","pip install theHarvester"],
+  ["sundowndev/phoneinfoga","Phone","Public footprint for a phone number.",""],
+  ["smicallef/spiderfoot","Framework","Module runner. Seed in, graph out.",""],
+  ["lanmaster53/recon-ng","Framework","Recon workbench.",""],
+  ["owasp-amass/amass","Domain","DNS and asset enumeration.",""],
+  ["projectdiscovery/subfinder","Domain","Passive subdomain discovery.",""],
+  ["blacklanternsecurity/bbot","Domain","Recursive recon for a domain.",""],
+  ["lissy93/web-check","Domain","Browser report for one site.",""],
+  ["jivoi/awesome-osint","Index","Curated map of OSINT sources.",""],
+  ["lockfale/OSINT-Framework","Index","Tree behind osintframework.com.",""]
+];
+const LINKS = [
+  ["Infrastructure","Shodan","Internet-connected device search","https://www.shodan.io/"],
+  ["Infrastructure","Censys","Certificates and attack surface","https://censys.io/"],
+  ["Infrastructure","DNSDumpster","Passive DNS map","https://dnsdumpster.com/"],
+  ["Infrastructure","crt.sh","Certificate transparency","https://crt.sh/"],
+  ["Identity","Have I Been Pwned","Breach notice for an address you hold","https://haveibeenpwned.com/"],
+  ["Identity","Hunter.io","Corporate email patterns","https://hunter.io/"],
+  ["Identity","WhatsMyName","Username templates in the browser","https://whatsmyname.app/"],
+  ["IMINT","Overpass Turbo","OpenStreetMap query bench","https://overpass-turbo.eu/"],
+  ["IMINT","Sentinel Hub","Satellite imagery browser","https://apps.sentinel-hub.com/eo-browser/"],
+  ["IMINT","SunCalc","Sun position for shadow timing","https://www.suncalc.org/"],
+  ["IMINT","Bellingcat","Geolocation method notes","https://www.bellingcat.com/"],
+  ["Intel","Maltego","Graph workbench","https://www.maltego.com/"],
+  ["Intel","SpiderFoot","Hosted automation site","https://www.spiderfoot.net/"],
+  ["Intel","AlienVault OTX","Open threat pulses","https://otx.alienvault.com/"],
+  ["Intel","VirusTotal","File, domain, IP reputation","https://www.virustotal.com/"]
+];
+const PLATFORMS = [
+  ["GitHub","https://github.com/{u}"],["X","https://x.com/{u}"],["Instagram","https://instagram.com/{u}"],
+  ["Reddit","https://www.reddit.com/user/{u}"],["TikTok","https://www.tiktok.com/@{u}"],["YouTube","https://www.youtube.com/@{u}"],
+  ["LinkedIn","https://www.linkedin.com/in/{u}"],["Keybase","https://keybase.io/{u}"],["Telegram","https://t.me/{u}"],
+  ["Mastodon","https://mastodon.social/@{u}"],["Twitch","https://www.twitch.tv/{u}"],["HN","https://news.ycombinator.com/user?id={u}"]
+];
+const $ = (id) => document.getElementById(id);
+let cat = "All", live = {}, picked = new Set(JSON.parse(localStorage.getItem("nexus-vault-pick")||"[]"));
+let linkDump = "", lastIocs = {email:[],url:[],ipv4:[],domain:[],hash:[]};
+function clone(full){ return "git clone --depth 1 https://github.com/" + full + ".git"; }
+function savePick(){ localStorage.setItem("nexus-vault-pick", JSON.stringify([...picked])); }
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&','<':'<','>':'>'}[c])); }
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+$("peek").onclick = () => { const i=$("key"); i.type = i.type==="password"?"text":"password"; };
+$("gateForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (await sha256($("key").value) !== TARGET) { $("err").textContent = "Wrong key. Use admin."; $("key").value=""; return; }
+  $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+  renderShelf(); renderLinks(); fitCase(); loadCache();
+};
+$("lock").onclick = () => { $("app").classList.add("hidden"); $("gate").classList.remove("hidden"); $("key").value=""; };
+document.querySelectorAll("#mods button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#mods button").forEach(x => x.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("on"));
+  b.classList.add("on"); $(b.dataset.mod).classList.add("on");
+  if (b.dataset.mod==="case") fitCase();
+});
+document.querySelectorAll("#benchNav button").forEach(b => b.onclick = () => {
+  ["extract","lattice","defang","hash","time","codec"].forEach(id => $("b-"+id).classList.toggle("hidden", id!==b.dataset.b));
+});
+
+function filtered(){
+  const q = $("q").value.trim().toLowerCase();
+  return REPOS.filter(r => (cat==="All"||r[1]===cat) && (!q || (r[0]+r[1]+r[2]).toLowerCase().includes(q)));
+}
+function renderShelf(){
+  const cats = ["All", ...new Set(REPOS.map(r => r[1]))];
+  $("cats").innerHTML = cats.map(c => `<button class="btn small ${c===cat?"yellow":""}" data-c="${c}">${c}</button>`).join("");
+  $("cats").querySelectorAll("button").forEach(b => b.onclick = () => { cat=b.dataset.c; renderShelf(); });
+  $("list").innerHTML = filtered().map(r => {
+    const meta = live[r[0]];
+    return `<article class="repo">
+      <label><input type="checkbox" data-pick="${r[0]}" ${picked.has(r[0])?"checked":""}> <h3 style="display:inline">${esc(r[0])}</h3></label>
+      <div class="desc">${esc(r[2])}</div>
+      <div class="meta"><span>${r[1]}</span><span>${meta?meta.stars.toLocaleString():"—"} stars</span><span>pushed ${meta?meta.pushed.slice(0,10):"refresh"}</span></div>
+      <div class="cmd">${clone(r[0])}</div>
+      <div class="row">
+        <button class="btn small" data-copy="${r[0]}">Copy clone</button>
+        <a class="btn small cyan" style="text-decoration:none" target="_blank" rel="noreferrer" href="https://github.com/${r[0]}">GitHub</a>
+        ${r[3]?`<button class="btn small yellow" data-pip="${esc(r[3])}">Copy install</button>`:""}
+      </div>
+    </article>`;
+  }).join("");
+  $("list").querySelectorAll("[data-pick]").forEach(box => box.onchange = () => { box.checked?picked.add(box.dataset.pick):picked.delete(box.dataset.pick); savePick(); stat(); });
+  $("list").querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => { await navigator.clipboard.writeText(clone(b.dataset.copy)); b.textContent="Copied"; });
+  $("list").querySelectorAll("[data-pip]").forEach(b => b.onclick = async () => { await navigator.clipboard.writeText(b.dataset.pip); b.textContent="Copied"; });
+  stat();
+}
+function stat(){ $("stat").textContent = filtered().length+" showing · "+picked.size+" checked · refresh caches 6 hours"; }
+function scriptText(){
+  const rows = REPOS.filter(r => picked.has(r[0]));
+  const use = rows.length ? rows : REPOS;
+  return "#!/bin/sh\nmkdir -p osint-repos && cd osint-repos || exit 1\n" + use.map(r => clone(r[0])).join("\n") + "\n";
+}
+$("q").oninput = renderShelf;
+$("copySel").onclick = async () => { await navigator.clipboard.writeText(scriptText()); $("copySel").textContent="Copied"; };
+$("saveSh").onclick = () => { const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([scriptText()],{type:"text/plain"})); a.download="nexus-osint-clone.sh"; a.click(); };
+function loadCache(){ try{ const p=JSON.parse(localStorage.getItem("nexus-vault-live")||"null"); if(p && Date.now()-p.at<6*3600*1000){ live=p.data; renderShelf(); } }catch{} }
+$("refresh").onclick = async () => {
+  $("refresh").textContent="Reading…";
+  const next={};
+  await Promise.all(REPOS.map(async r => {
+    try{ const res=await fetch("https://api.github.com/repos/"+r[0]); if(!res.ok) return; const j=await res.json(); next[r[0]]={stars:j.stargazers_count,pushed:j.pushed_at}; }catch{}
+  }));
+  live={...live,...next};
+  localStorage.setItem("nexus-vault-live", JSON.stringify({at:Date.now(),data:live}));
+  $("refresh").textContent="Refresh GitHub"; renderShelf();
+};
+
+function renderLinks(){
+  const q=$("lq").value.trim().toLowerCase();
+  const rows=LINKS.filter(t => !q || (t[0]+t[1]+t[2]).toLowerCase().includes(q));
+  $("linkGrid").innerHTML = rows.map(t => `<a class="tool" style="display:block;text-decoration:none;color:inherit" target="_blank" rel="noreferrer" href="${t[3]}"><h3>${esc(t[1])}</h3><div class="desc">${esc(t[0])} · ${esc(t[2])}</div><div class="cmd">${esc(t[3].replace(/^https?:\/\//,""))}</div></a>`).join("");
+}
+$("lq").oninput = renderLinks;
+
+function uniq(a){ return [...new Set(a)]; }
+$("runExtract").onclick = () => {
+  const text=$("blob").value;
+  lastIocs.email=uniq(text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)||[]);
+  lastIocs.url=uniq(text.match(/https?:\/\/[^\s<>"')\]]+/gi)||[]);
+  lastIocs.ipv4=uniq(text.match(/\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g)||[]);
+  lastIocs.hash=uniq(text.match(/\b[a-fA-F0-9]{32}\b|\b[a-fA-F0-9]{40}\b|\b[a-fA-F0-9]{64}\b/g)||[]);
+  lastIocs.domain=uniq((text.match(/\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/gi)||[]).map(d=>d.toLowerCase()).filter(d=>!lastIocs.ipv4.includes(d)));
+  $("iocOut").innerHTML = Object.entries(lastIocs).filter(([,v])=>v.length).map(([k,v])=>`<div class="ioc"><b style="color:#ff0080">${k}</b><div class="desc">${v.map(esc).join("<br>")}</div></div>`).join("") || `<p class="lede">No indicators.</p>`;
+};
+$("copyIocs").onclick = async () => { await navigator.clipboard.writeText(JSON.stringify(lastIocs,null,2)); };
+$("pushCase").onclick = () => { Object.entries(lastIocs).forEach(([k,vals])=>vals.slice(0,8).forEach(v=>addEntity(k==="ipv4"?"ip":k,v))); document.querySelector('[data-mod="case"]').click(); };
+$("buildLattice").onclick = () => {
+  const u=$("handle").value.trim().replace(/^@/,"");
+  if(!u) return;
+  $("latticeOut").innerHTML = PLATFORMS.map(([n,t])=>{ const href=t.replaceAll("{u}",encodeURIComponent(u)); return `<a class="plat" target="_blank" rel="noopener" href="${href}">${n}<small>${href.replace(/^https?:\/\//,"")}</small></a>`; }).join("");
+  linkDump = PLATFORMS.map(([n,t])=>n+"\t"+t.replaceAll("{u}",u)).join("\n");
+};
+$("copyLinks").onclick = async () => { if(linkDump) await navigator.clipboard.writeText(linkDump); };
+function defang(s){ return s.replace(/https/gi,"hxxps").replace(/http/gi,"hxxp").replace(/\./g,"[.]"); }
+function refang(s){ return s.replace(/hxxps/gi,"https").replace(/hxxp/gi,"http").replace(/\[\.\]/g,".").replace(/\[dot\]/gi,"."); }
+$("doDefang").onclick=()=>{$("fangOut").value=defang($("fangIn").value);};
+$("doRefang").onclick=()=>{$("fangOut").value=refang($("fangIn").value);};
+$("copyFang").onclick=async()=>{await navigator.clipboard.writeText($("fangOut").value);};
+function identify(h){
+  const s=h.trim();
+  if(/^\$2[aby]\$/.test(s)) return [["bcrypt","high"]];
+  if(/^[a-f0-9]{32}$/i.test(s)) return [["MD5","medium — same width as NTLM"],["NTLM","medium"]];
+  if(/^[a-f0-9]{40}$/i.test(s)) return [["SHA-1","high"]];
+  if(/^[a-f0-9]{64}$/i.test(s)) return [["SHA-256","high"]];
+  if(/^[a-f0-9]{128}$/i.test(s)) return [["SHA-512","high"]];
+  return [["unclassified","low"]];
+}
+$("idHash").onclick=()=>{ $("hashOut").innerHTML="<table><tr><th>CANDIDATE</th><th>NOTE</th></tr>"+identify($("hashIn").value).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")+"</table>"; };
+function renderTime(d){ if(Number.isNaN(d.getTime())){ $("timeOut").textContent="Unparsed."; return; } $("timeOut").innerHTML=`<table><tr><td>ISO</td><td>${d.toISOString()}</td></tr><tr><td>local</td><td>${d.toString()}</td></tr><tr><td>epoch s</td><td>${Math.floor(d.getTime()/1000)}</td></tr></table>`; }
+$("parseTime").onclick=()=>{ const raw=$("timeIn").value.trim(); if(/^\d{13}$/.test(raw)) renderTime(new Date(+raw)); else if(/^\d{10}$/.test(raw)) renderTime(new Date(+raw*1000)); else renderTime(new Date(raw)); };
+$("nowTime").onclick=()=>{ const d=new Date(); $("timeIn").value=d.toISOString(); renderTime(d); };
+function rot13(s){ return s.replace(/[A-Za-z]/g,c=>String.fromCharCode(c.charCodeAt(0)+(c.toLowerCase()<"n"?13:-13))); }
+document.querySelectorAll("[data-op]").forEach(btn=>btn.onclick=()=>{
+  const src=$("codecIn").value; try{
+    const op=btn.dataset.op; let out="";
+    if(op==="b64e") out=btoa(unescape(encodeURIComponent(src)));
+    if(op==="b64d") out=decodeURIComponent(escape(atob(src.trim())));
+    if(op==="hexe") out=[...new TextEncoder().encode(src)].map(b=>b.toString(16).padStart(2,"0")).join("");
+    if(op==="hexd"){ const c=src.replace(/\s+/g,""); const bytes=new Uint8Array(c.length/2); for(let i=0;i<bytes.length;i++) bytes[i]=parseInt(c.slice(i*2,i*2+2),16); out=new TextDecoder().decode(bytes); }
+    if(op==="urle") out=encodeURIComponent(src);
+    if(op==="urld") out=decodeURIComponent(src);
+    if(op==="rot") out=rot13(src);
+    $("codecOut").value=out;
+  }catch(err){ $("codecOut").value="reject: "+err.message; }
+});
+
+const COLORS={handle:"#00ff87",email:"#60efff",domain:"#ffcc00",ip:"#ff0080",url:"#fff",hash:"#b388ff",note:"#889"};
+const nodes=[], edges=[];
+let linkArmed=false, pending=null, drag=null, view={x:0,y:0,z:1}, pulse=0;
+const caseCanvas=$("caseCanvas"), cctx=caseCanvas.getContext("2d");
+function fitCase(){ const r=$("caseWrap").getBoundingClientRect(); caseCanvas.width=r.width*devicePixelRatio; caseCanvas.height=r.height*devicePixelRatio; cctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+addEventListener("resize", fitCase);
+function addEntity(type,label){ if(!label) return; nodes.push({id:Math.random().toString(36).slice(2,8),type,label:String(label).slice(0,80),x:70+Math.random()*200,y:60+Math.random()*160}); }
+$("addNode").onclick=()=>{ addEntity($("etype").value,$("elabel").value.trim()); $("elabel").value=""; };
+$("linkMode").onclick=()=>{ linkArmed=!linkArmed; pending=null; $("linkMode").textContent=linkArmed?"Linking…":"Link mode"; };
+$("wipeCase").onclick=()=>{ nodes.length=0; edges.length=0; };
+$("exportCase").onclick=async()=>{ await navigator.clipboard.writeText(JSON.stringify({nodes,edges,exported:new Date().toISOString()},null,2)); };
+function hit(px,py){ const x=(px-view.x)/view.z, y=(py-view.y)/view.z; for(let i=nodes.length-1;i>=0;i--) if(Math.hypot(nodes[i].x-x,nodes[i].y-y)<26) return nodes[i]; return null; }
+function pos(ev){ const r=caseCanvas.getBoundingClientRect(); const s=ev.touches?ev.touches[0]:ev; return {x:s.clientX-r.left,y:s.clientY-r.top}; }
+caseCanvas.addEventListener("pointerdown", ev=>{ caseCanvas.setPointerCapture(ev.pointerId); const p=pos(ev), n=hit(p.x,p.y);
+  if(linkArmed&&n){ if(!pending) pending=n; else if(pending!==n){ edges.push({a:pending.id,b:n.id}); pending=null; linkArmed=false; $("linkMode").textContent="Link mode"; } return; }
+  drag = n ? {n,dx:(p.x-view.x)/view.z-n.x,dy:(p.y-view.y)/view.z-n.y} : {pan:true,lx:p.x,ly:p.y};
+});
+caseCanvas.addEventListener("pointermove", ev=>{ if(!drag) return; const p=pos(ev); if(drag.pan){ view.x+=p.x-drag.lx; view.y+=p.y-drag.ly; drag.lx=p.x; drag.ly=p.y; } else { drag.n.x=(p.x-view.x)/view.z-drag.dx; drag.n.y=(p.y-view.y)/view.z-drag.dy; } });
+caseCanvas.addEventListener("pointerup", ()=>{ drag=null; });
+caseCanvas.addEventListener("wheel", ev=>{ ev.preventDefault(); const p=pos(ev); const nz=Math.min(2.2,Math.max(.5,view.z*(ev.deltaY<0?1.08:.92))); view.x=p.x-(p.x-view.x)*(nz/view.z); view.y=p.y-(p.y-view.y)*(nz/view.z); view.z=nz; },{passive:false});
+(function draw(){
+  const w=caseCanvas.clientWidth,h=caseCanvas.clientHeight; cctx.clearRect(0,0,w,h); cctx.save(); cctx.translate(view.x,view.y); cctx.scale(view.z,view.z); pulse+=.02;
+  edges.forEach(e=>{ const a=nodes.find(n=>n.id===e.a), b=nodes.find(n=>n.id===e.b); if(!a||!b) return; cctx.strokeStyle="rgba(96,239,255,.6)"; cctx.beginPath(); cctx.moveTo(a.x,a.y); cctx.lineTo(b.x,b.y); cctx.stroke(); const t=pulse%1; cctx.fillStyle="#ff0080"; cctx.beginPath(); cctx.arc(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,3,0,6.28); cctx.fill(); });
+  nodes.forEach(n=>{ const col=COLORS[n.type]||"#00ff87"; cctx.strokeStyle=col; cctx.fillStyle="#0a0a0f"; cctx.lineWidth=2; cctx.beginPath(); cctx.arc(n.x,n.y,20,0,6.28); cctx.fill(); cctx.stroke(); cctx.fillStyle=col; cctx.font="10px monospace"; cctx.textAlign="center"; cctx.fillText(n.type,n.x,n.y-26); cctx.fillStyle="#e8fff4"; cctx.fillText(n.label.slice(0,16),n.x,n.y+4); });
+  cctx.restore(); $("caseStat").textContent=nodes.length+" nodes · "+edges.length+" links"; requestAnimationFrame(draw);
+})();
+const field=$("field"), ctx=field.getContext("2d");
+const dots=Array.from({length:42},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.00028,vy:(Math.random()-.5)*.00028}));
+addEventListener("resize",()=>{field.width=innerWidth;field.height=innerHeight}); field.width=innerWidth; field.height=innerHeight;
+(function tick(){ ctx.clearRect(0,0,field.width,field.height); dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0||d.x>1)d.vx*=-1;if(d.y<0||d.y>1)d.vy*=-1; ctx.fillStyle="#60efff"; ctx.beginPath(); ctx.arc(d.x*field.width,d.y*field.height,1.3,0,6.28); ctx.fill();}); requestAnimationFrame(tick); })();
+</script>
+</body>
+</html>
