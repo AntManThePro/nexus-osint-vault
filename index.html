@@ -71,7 +71,7 @@ th{color:var(--y);font-size:10px;letter-spacing:.1em}
     </div>
     <form id="gateForm">
       <label for="key">OPERATOR KEY</label>
-      <input id="key" type="password" placeholder="passphrase" autocomplete="current-password">
+      <input id="key" type="password" placeholder="operator key" autocomplete="current-password">
       <div class="row">
         <button class="btn" type="submit">Open vault</button>
         <button class="btn pink" id="peek" type="button">Show</button>
@@ -234,9 +234,19 @@ async function sha256(s){
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
 }
 $("peek").onclick = () => { const i=$("key"); i.type = i.type==="password"?"text":"password"; };
+let fails = 0, lockUntil = 0;
 $("gateForm").onsubmit = async (e) => {
   e.preventDefault();
-  if (await sha256($("key").value) !== TARGET) { $("err").textContent = "Wrong key."; $("key").value=""; return; }
+  const wait = lockUntil - Date.now();
+  if (wait > 0) { $("err").textContent = "Too many attempts. Try again in " + Math.ceil(wait/1000) + "s."; $("key").value=""; return; }
+  if (await sha256($("key").value) !== TARGET) {
+    fails++;
+    const delay = Math.min(1000 * 2 ** (fails - 1), 30000);
+    lockUntil = Date.now() + delay;
+    $("err").textContent = "Wrong key. Wait " + Math.ceil(delay/1000) + "s before retrying.";
+    $("key").value=""; return;
+  }
+  fails = 0; lockUntil = 0; $("err").textContent = "";
   $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
   renderShelf(); renderLinks(); fitCase(); loadCache();
 };
