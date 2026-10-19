@@ -234,21 +234,27 @@ async function sha256(s){
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
 }
 $("peek").onclick = () => { const i=$("key"); i.type = i.type==="password"?"text":"password"; };
-let fails = 0, lockUntil = 0;
+let fails = 0, lockUntil = 0, attemptInFlight = false;
 $("gateForm").onsubmit = async (e) => {
   e.preventDefault();
+  if (attemptInFlight) return;
   const wait = lockUntil - Date.now();
   if (wait > 0) { $("err").textContent = "Too many attempts. Try again in " + Math.ceil(wait/1000) + "s."; $("key").value=""; return; }
-  if (await sha256($("key").value) !== TARGET) {
-    fails++;
-    const delay = Math.min(1000 * 2 ** (fails - 1), 30000);
-    lockUntil = Date.now() + delay;
-    $("err").textContent = "Wrong key. Wait " + Math.ceil(delay/1000) + "s before retrying.";
-    $("key").value=""; return;
+  attemptInFlight = true;
+  try {
+    if (await sha256($("key").value) !== TARGET) {
+      fails++;
+      const delay = Math.min(1000 * 2 ** (fails - 1), 30000);
+      lockUntil = Date.now() + delay;
+      $("err").textContent = "Wrong key. Wait " + Math.ceil(delay/1000) + "s before retrying.";
+      $("key").value=""; return;
+    }
+    fails = 0; lockUntil = 0; $("err").textContent = "";
+    $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+    renderShelf(); renderLinks(); fitCase(); loadCache();
+  } finally {
+    attemptInFlight = false;
   }
-  fails = 0; lockUntil = 0; $("err").textContent = "";
-  $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
-  renderShelf(); renderLinks(); fitCase(); loadCache();
 };
 $("lock").onclick = () => { $("app").classList.add("hidden"); $("gate").classList.remove("hidden"); $("key").value=""; };
 document.querySelectorAll("#mods button").forEach(b => b.onclick = () => {
